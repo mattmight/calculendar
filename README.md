@@ -1,12 +1,19 @@
 # Calculendar
 
-A command line tool for computing availabiilty (currently supports Google
-Calendar API).
+A command line tool for computing availability.
+
+It currently supports the Google Calendar API.
 
 Internally, the tool implements a Boolean calculus over calendar intervals to
 compute availability.
 
-This allows one to define availability as a function of several calendars.
+This allows you to define availability as a function of several calendars. For
+instance, you might have a primary calendar personal calendar, but also a
+shared team calendar, and you will need to consider both for conflicts.
+
+And, then you might want to define a calendar that specifies that there are
+certain times of the day and days the week where you are available for
+appointments.
 
 For example:
 
@@ -25,6 +32,7 @@ joint_availability = my_availability & your_availability
 
  + Extract the Boolean calculus of calendars logic into a seperate module.
  + Allow filtering of calendar events with `lambda` filter over events.
+ + Implement a reasonable agenda mode output for upcoming events.
  + Add support for converting .ics files into calendar intervals.
  + Add support for Office 365 API.
  + Add support for computing joint availability of multiple users.
