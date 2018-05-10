@@ -4,6 +4,8 @@ A command line tool for computing availability.
 
 It currently supports the Google Calendar API.
 
+(If you want simple Google Calendar manipulation through the command line, you may way [gcalcli](https://pypi.org/project/gcalcli/).)
+
 Internally, the tool implements a Boolean calculus over calendar intervals to
 compute availability.  This allows you to define availability as a function of
 several calendars.
