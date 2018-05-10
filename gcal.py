@@ -67,13 +67,17 @@ class cal_event:
     return not((self < other) or (other < self))
 
   # print a human readable string:
-  def human_str(self):
-    start_date = self.start.format("YYYY-MM-DD")
-    end_date = self.end.format("YYYY-MM-DD")
-    if (start_date == end_date):
-      return self.start.format("MMMM DD @ hh:mma") + "-" + self.end.format("hh:mma")
+  def human_str(self, tz):
+
+    left = self.start.to(tz)
+    right = self.end.to(tz)
+
+    left_date = left.format("YYYY-MM-DD")
+    right_date = right.format("YYYY-MM-DD")
+    if (left_date == right_date):
+      return left.format("MMMM DD @ hh:mma") + "-" + right.format("hh:mma") + " " + tz
     else:
-      return self.start.format("MMMM DD @ hh:mma") + "-" + self.end.format("MMMM DD @ hh:mma")
+      return left.format("MMMM DD @ hh:mma") + "-" + right.format("MMMM DD @ hh:mma" + " " + tz)
 
 
 
@@ -243,6 +247,7 @@ parser.add_argument("--free-calendars",
 args = parser.parse_args()
 
 QUERY_TIMEZONE=args.query_timezone
+OUTPUT_TIMEZONE=args.output_timezone
 
 
 # TODO: Abstract out the timezones
@@ -378,7 +383,7 @@ elif args.command == "available":
 
   # print out availability:
   for ev in available.events:
-    print(ev.human_str())
+    print(ev.human_str(OUTPUT_TIMEZONE))
 
 else:
   print("unknown command: " + args.command)
