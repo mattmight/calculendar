@@ -75,9 +75,9 @@ class cal_event:
     left_date = left.format("YYYY-MM-DD")
     right_date = right.format("YYYY-MM-DD")
     if (left_date == right_date):
-      return left.format("MMMM DD @ hh:mma") + "-" + right.format("hh:mma") + " " + tz
+      return left.format("ddd MMMM DD @ hh:mma") + "-" + right.format("hh:mma") + " " + tz
     else:
-      return left.format("MMMM DD @ hh:mma") + "-" + right.format("MMMM DD @ hh:mma" + " " + tz)
+      return left.format("ddd MMMM DD @ hh:mma") + "-" + right.format("ddd MMMM DD @ hh:mma" + " " + tz)
 
 
 
