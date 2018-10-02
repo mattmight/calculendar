@@ -17,33 +17,34 @@ from httplib2 import Http
 from oauth2client import file, client, tools
 
 
-def get_credentials_directory(location=None):
+def get_credentials_directory(location='C:/Users/Camer/Desktop/credentials.json'):
     if not location:
         try:
             credentials = os.getenv("HOME") + "/etc/keys/google-api/"
             return credentials
         except TypeError:
-            print('Your credentials.json does not seem to be in the expected location')
-    elif os.path.exists(os.path.join(location + 'credentials.json')):
+            print("Your credentials.json does not seem to be in the expected location")
+    elif os.path.exists(os.path.join(location + "credentials.json")):
         credentials = location
         return credentials
-    elif 'credentials.json' in location:
+    elif "credentials.json" in location:
         credentials = os.path.dirname(location)
         return credentials
-    loc = input('Path to credentials.json: ')
-    get_credentials_directory(location=loc)
+    loc = input("Path to credentials.json: ")
+    return get_credentials_directory(location=loc)
+
 
 # Setup access to the Calendar API:
 # This may require an interactive web authentication the fist time.
 
 # Credentials should be stored in API_KEYS_DIR.
 def get_service():
-    API_KEYS_DIR = get_credentials_directory()
     SCOPES = "https://www.googleapis.com/auth/calendar"
-    store = file.Storage(API_KEYS_DIR + "credentials.json")
+    cred = os.path.join(get_credentials_directory(), 'credentials.json')
+    store = file.Storage('token.json')
     creds = store.get()
     if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets(API_KEYS_DIR + "/client_secret.json", SCOPES)
+        flow = client.flow_from_clientsecrets(cred, SCOPES)
         creds = tools.run_flow(flow, store)
     service = build("calendar", "v3", http=creds.authorize(Http()))
     return service

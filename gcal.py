@@ -262,10 +262,14 @@ def get_calendar_events(calendarId="primary", maxResults=10):
     )
     return events_result.get("items", [])
 
+
 # TODO: Abstract out the timezones
+
 SPANSTART = arrow.get(isoformat_to_datetime(args.start)).to(QUERY_TIMEZONE)
 SPANEND = arrow.get(isoformat_to_datetime(args.end)).to(QUERY_TIMEZONE)
 # Returns a dict containing a cal_interval for each requested calendar:
+
+
 def get_freebusy(
     calendarIds=["primary"], timeZone=QUERY_TIMEZONE, start=SPANSTART, end=SPANEND
 ):
@@ -344,4 +348,3 @@ elif args.command == "available":
         print(ev.human_str(OUTPUT_TIMEZONE))
 else:
     print("unknown command: " + args.command)
-
