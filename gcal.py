@@ -7,13 +7,17 @@ from __future__ import print_function
 import argparse
 # Module functions
 import settings
-from src.credentials import get_service
+import src.credentials
 from src.utils import *
 
 # Dates to access the next month.
 NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
 IN30 = NOW.replace(days=+30)  # in 30 days
+
+start_work = arrow.get(settings.START_WORK, 'H:mm A')
+end_work = arrow.get(settings.END_WORK, 'H:mm A')
+
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -44,7 +48,7 @@ END = arrow.get(args.end)
 BUSY = args.busy_calendars
 FREE = args.free_calendars
 
-service = get_service()
+service = src.credentials.get_service()
 
 
 # Get the next several events:
@@ -101,7 +105,7 @@ def get_cal(cal_index, cal_id):
     if cal_id == "weekday":
         return ~cal_weekends(START, END)
     if cal_id == "workhours":
-        return cal_daily_event(START, END, 9, 00, 17, 00)
+        return cal_daily_event(START, END, start_work.hour, start_work.minute, end_work.hour, end_work.minute)
     else:
         return cal_index[cal_id]
 

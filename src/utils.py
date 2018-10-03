@@ -3,6 +3,9 @@ import arrow
 
 # A cal_event represents a single event with a start and end time.
 # NOTE: all times have type arrow.
+import settings
+
+
 class Event:
     def __init__(self, start, end):
         self.start = arrow.get(start)
@@ -128,7 +131,7 @@ class Interval:
 # A cal_interval with a single event every day:
 def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
     new_start = start.floor("day")
-    new_end = end.shift(days=+1).floor("day")
+    new_end = end.replace(days=+1).floor("day")
 
     def events_daily_event(start, end, start_hour, start_min, end_hour, end_min):
         # reset start date to start of day; end date to end of day
@@ -140,7 +143,7 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
                 start.replace(hour=end_hour, minute=end_min),
             )
             evs = events_daily_event(
-                start.shift(days=+1), end, start_hour, start_min, end_hour, end_min
+                start.replace(days=+1), end, start_hour, start_min, end_hour, end_min
             )
             return [ev] + evs
 
@@ -162,7 +165,7 @@ def cal_weekends(start, end):
         # TODO: abstract this to handle different conventions for weekends
         if end < start:
             return []
-        elif start.weekday() == 5 or start.weekday() == 6:
+        elif start.weekday() in settings.weekend_num:
             return [
                 Event(start, start.replace(days=+1).floor("day"))
             ] + events_weekends(start.replace(days=+1), end)

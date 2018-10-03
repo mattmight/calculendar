@@ -1,7 +1,23 @@
 CREDENTIALS_DIR = ""
 TIMEZONE = "US/Eastern"
+START_WORK = "10:00 AM"
+END_WORK = "5:00 PM"
+WEEKENDS = ["Saturday", "Sunday"]
 
-# Timezones include
+
+weekday_dict = {
+    'Monday': 0,
+    'Tuesday': 1,
+    'Wednesday': 2,
+    'Thursday': 3,
+    'Friday': 4,
+    'Saturday': 5,
+    'Sunday': 6,
+}
+weekend_num = [weekday_dict[i] for i in WEEKENDS]
+
+# Timezones include:
+
 # ['Africa/Abidjan',
 #  'Africa/Accra',
 #  'Africa/Addis_Ababa',
