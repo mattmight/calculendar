@@ -1,21 +1,40 @@
-CREDENTIALS_DIR = "C:/Users/Camer/Desktop/credentials.json"
-TIMEZONE = "US/Eastern"
-START_WORK = "9:00 AM"
-END_WORK = "5:00 PM"
-WEEKENDS = ["Saturday", "Sunday"]
+import configparser
+
+parser = configparser.ConfigParser(interpolation=None)
+parser.read('settings.ini')
+
+
+CREDENTIALS_DIR = parser.get('Settings', 'credentials_dir')
+TIMEZONE = parser.get('Settings', 'timezone')
+START_WORK = parser.get('Settings', 'start_work')
+END_WORK = parser.get('Settings', 'end_work')
+
+
+def get_weekend_num():
+    weekend = []
+    for i in parser['Weekend Days']:
+        if parser.getboolean('Weekend Days', i):
+            weekend.append(weekday_dict[i])
+    return weekend
 
 
 weekday_dict = {
-    'Monday': 0,
-    'Tuesday': 1,
-    'Wednesday': 2,
-    'Thursday': 3,
-    'Friday': 4,
-    'Saturday': 5,
-    'Sunday': 6,
+    'monday': 0,
+    'tuesday': 1,
+    'wednesday': 2,
+    'thursday': 3,
+    'friday': 4,
+    'saturday': 5,
+    'sunday': 6,
 }
-weekend_num = [weekday_dict[i] for i in WEEKENDS]
 
+weekend_num = get_weekend_num()
+
+
+def set_calendar(cal_name, cal_id):
+    parser.set('Calendars', cal_name, cal_id)
+    with open('settings.ini', 'w') as config:
+        parser.write(config)
 # Timezones include:
 
 # ['Africa/Abidjan',

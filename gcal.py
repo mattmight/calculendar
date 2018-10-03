@@ -6,10 +6,12 @@ from __future__ import print_function
 # For command-line arguments
 import argparse
 # Module functions
+from pprint import pprint
+
 import settings
 import src.credentials
 from src.utils import *
-
+from src.ics import get_ics_calendar_events
 # Dates to access the next month.
 NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
@@ -53,18 +55,21 @@ service = src.credentials.get_service()
 
 # Get the next several events:
 def get_calendar_events(calendarId="primary", maxResults=10):
-    events_result = (
-        service.events()
-        .list(
-            calendarId=calendarId,
-            timeMin=START.isoformat(),
-            maxResults=maxResults,
-            singleEvents=True,
-            orderBy="startTime",
+    if '.ics' in calendarId:
+        return get_ics_calendar_events(calendarId)
+    else:
+        events_result = (
+            service.events()
+            .list(
+                calendarId=calendarId,
+                timeMin=START.isoformat(),
+                maxResults=maxResults,
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
         )
-        .execute()
-    )
-    return events_result.get("items", [])
+        return events_result.get("items", [])
 
 
 # Returns a dict containing a cal_interval for each requested calendar:
@@ -115,6 +120,10 @@ def list_cals():
     cals = cals_result.get("items", [])
     for cal in cals:
         print(cal["summary"] + ": " + cal["id"])
+    user_response = input("Would you like to save these into your settings for future use?")
+    if 'y' in user_response.lower():
+        for cal in cals:
+            settings.set_calendar(cal['summary'], cal['id'])
 
 
 def agenda():
