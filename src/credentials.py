@@ -16,8 +16,9 @@ from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 
+import settings
 
-def get_credentials_directory(location='C:/Users/Camer/Desktop/credentials.json'):
+def get_credentials_directory(location=settings.CREDENTIALS_DIR):
     if not location:
         try:
             credentials = os.getenv("HOME") + "/etc/keys/google-api/"
@@ -40,12 +41,11 @@ def get_credentials_directory(location='C:/Users/Camer/Desktop/credentials.json'
 # Credentials should be stored in API_KEYS_DIR.
 def get_service():
     SCOPES = "https://www.googleapis.com/auth/calendar"
-    cred = os.path.join(get_credentials_directory(), 'credentials.json')
-    store = file.Storage('token.json')
+    cred = os.path.join(get_credentials_directory(), "credentials.json")
+    store = file.Storage("token.json")
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(cred, SCOPES)
         creds = tools.run_flow(flow, store)
     service = build("calendar", "v3", http=creds.authorize(Http()))
     return service
-

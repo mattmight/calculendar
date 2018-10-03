@@ -1,27 +1,27 @@
 """
 A tool for interacting with the Google calendar.
 """
+# Python Version Compatibility
 from __future__ import print_function
 # For command-line arguments
 import argparse
+# Module functions
+import settings
 from src.credentials import get_service
 from src.utils import *
 
 # Dates to access the next month.
 NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
-IN30 = NOW.replace(days=+30) # in 30 days
+IN30 = NOW.replace(days=+30)  # in 30 days
 
 # Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("command", help="list | agenda | available")
-parser.add_argument("--start", default=NOW, help="start of timespan in ISO 8601 format")
-parser.add_argument("--end", default=IN30, help="end of timespan in ISO 8601 format")
+parser.add_argument("--start", default=NOW, help="start of timespan")
+parser.add_argument("--end", default=IN30, help="end of timespan")
 parser.add_argument(
-    "--output-timezone", default="US/Eastern", help="timezone to use for output"
-)
-parser.add_argument(
-    "--query-timezone", default="US/Eastern", help="timezone to use for output"
+    "--query-timezone", default=settings.TIMEZONE, help="timezone to use for output"
 )
 parser.add_argument(
     "--busy-calendars",
@@ -38,19 +38,13 @@ parser.add_argument(
     help="calendar ids to use for free information",
 )
 args = parser.parse_args()
-args.start = arrow.get(args.start)
-args.end = arrow.get(args.end)
 QUERY_TIMEZONE = args.query_timezone
-OUTPUT_TIMEZONE = args.output_timezone
+START = arrow.get(args.start)
+END = arrow.get(args.end)
+BUSY = args.busy_calendars
+FREE = args.free_calendars
 
 service = get_service()
-
-
-# Get a list of all calendars:
-def get_calendars():
-    cals_result = service.calendarList().list().execute()
-    cals = cals_result.get("items", [])
-    return cals
 
 
 # Get the next several events:
@@ -59,7 +53,7 @@ def get_calendar_events(calendarId="primary", maxResults=10):
         service.events()
         .list(
             calendarId=calendarId,
-            timeMin=SPANSTART.isoformat(),
+            timeMin=START.isoformat(),
             maxResults=maxResults,
             singleEvents=True,
             orderBy="startTime",
@@ -69,14 +63,10 @@ def get_calendar_events(calendarId="primary", maxResults=10):
     return events_result.get("items", [])
 
 
-# TODO: Abstract out the timezones
-
-SPANSTART = args.start
-SPANEND = args.end
-
-
 # Returns a dict containing a cal_interval for each requested calendar:
-def get_freebusy(calendarIds=["primary"], timeZone=QUERY_TIMEZONE, start=SPANSTART, end=SPANEND):
+def get_freebusy(
+    calendarIds=["primary"], timeZone=QUERY_TIMEZONE, start=START, end=END
+):
     fb_q = {
         "timeMin": start.isoformat(),
         "timeMax": end.isoformat(),
@@ -92,10 +82,10 @@ def get_freebusy(calendarIds=["primary"], timeZone=QUERY_TIMEZONE, start=SPANSTA
         for t in busy_times:
             ev_start = arrow.get(t["start"])
             ev_end = arrow.get(t["end"])
-            ev = cal_event(ev_start, ev_end)
+            ev = Event(ev_start, ev_end)
             # accumulate events in reverse order:
             revs = [ev] + revs
-        cal_index[id] = cal_interval(start, revs[::-1], end)
+        cal_index[id] = Interval(start, revs[::-1], end)
     return cal_index
 
 
@@ -107,43 +97,48 @@ def get_freebusy(calendarIds=["primary"], timeZone=QUERY_TIMEZONE, start=SPANSTA
 
 def get_cal(cal_index, cal_id):
     if cal_id == "weekend":
-        return cal_weekends(SPANSTART, SPANEND)
+        return cal_weekends(START, END)
     if cal_id == "weekday":
-        return ~cal_weekends(SPANSTART, SPANEND)
+        return ~cal_weekends(START, END)
     if cal_id == "workhours":
-        return cal_daily_event(SPANSTART, SPANEND, 9, 00, 17, 00)
+        return cal_daily_event(START, END, 9, 00, 17, 00)
     else:
         return cal_index[cal_id]
 
 
 def list_cals():
-    for cal in get_calendars():
+    cals_result = service.calendarList().list().execute()
+    cals = cals_result.get("items", [])
+    for cal in cals:
         print(cal["summary"] + ": " + cal["id"])
 
 
 def agenda():
-    events = get_calendar_events()
+    events = []
+    for cal in BUSY:
+        cal_events = get_calendar_events(calendarId=cal)
+        events += cal_events
     if not events:
         print("No upcoming events found.")
     for event in events:
         start = event["start"].get("dateTime", event["start"].get("date"))
-        a_start = arrow.get(start).format('YYYY-MM-DD h:mm A')
+        a_start = arrow.get(start).format("YYYY-MM-DD h:mm A")
         # print(event)
         print(a_start, event["summary"])
 
 
 def available():
-    calidx = get_freebusy(args.busy_calendars + args.free_calendars)
-    my_busy = cal_interval(SPANSTART, [], SPANEND)
-    my_free = cal_interval(SPANSTART, [cal_event(SPANSTART, SPANEND)], SPANEND)
-    for id in args.busy_calendars:
-        my_busy = my_busy | get_cal(calidx, id)
-    for id in args.free_calendars:
-        my_free = my_free & get_cal(calidx, id)
+    calidx = get_freebusy(BUSY + FREE)
+    my_busy = Interval(START, [], END)
+    my_free = Interval(START, [Event(START, END)], END)
+    for cal_id in BUSY:
+        my_busy = my_busy | get_cal(calidx, cal_id)
+    for cal_id in FREE:
+        my_free = my_free & get_cal(calidx, cal_id)
     available = ~my_busy & my_free
     # print out availability:
     for ev in available.events:
-        print(ev.human_str(OUTPUT_TIMEZONE))
+        print(ev.human_str(QUERY_TIMEZONE))
 
 
 if args.command == "list":
@@ -154,4 +149,3 @@ elif args.command == "available":
     available()
 else:
     print("unknown command: " + args.command)
-
