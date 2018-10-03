@@ -29,22 +29,22 @@ class Event:
         return not ((self < other) or (other < self))
 
     # print a human readable string:
-    def human_str(self, tz):
+    def human_str(self):
 
-        left = self.start.to(tz)
-        right = self.end.to(tz)
+        left = self.start.to(settings.TIMEZONE)
+        right = self.end.to(settings.TIMEZONE)
 
         left_date = left.format("YYYY-MM-DD")
         right_date = right.format("YYYY-MM-DD")
         if left_date == right_date:
             return (
-                left.format("MMMM DD @ h:mma") + "-" + right.format("h:mma") + " " + tz
+                left.format("MMMM DD @ h:mma") + "-" + right.format("h:mma") + " " + settings.TIMEZONE
             )
         else:
             return (
                 left.format("MMMM DD @ h:mma")
                 + "-"
-                + right.format("MMMM DD @ h:mma" + " " + tz)
+                + right.format("MMMM DD @ h:mma" + " " + settings.TIMEZONE)
             )
 
 
@@ -139,8 +139,8 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
             return []
         else:
             ev = Event(
-                start.replace(hour=start_hour, minute=start_min),
-                start.replace(hour=end_hour, minute=end_min),
+                start.replace(hour=start_hour, minute=start_min, tzinfo=settings.TIMEZONE),
+                start.replace(hour=end_hour, minute=end_min, tzinfo=settings.TIMEZONE),
             )
             evs = events_daily_event(
                 start.replace(days=+1), end, start_hour, start_min, end_hour, end_min

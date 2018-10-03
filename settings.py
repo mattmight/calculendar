@@ -1,6 +1,6 @@
-CREDENTIALS_DIR = ""
+CREDENTIALS_DIR = "C:/Users/Camer/Desktop/credentials.json"
 TIMEZONE = "US/Eastern"
-START_WORK = "10:00 AM"
+START_WORK = "9:00 AM"
 END_WORK = "5:00 PM"
 WEEKENDS = ["Saturday", "Sunday"]
 

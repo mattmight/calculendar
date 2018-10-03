@@ -15,8 +15,8 @@ NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
 IN30 = NOW.replace(days=+30)  # in 30 days
 
-start_work = arrow.get(settings.START_WORK, 'H:mm A')
-end_work = arrow.get(settings.END_WORK, 'H:mm A')
+start_work = arrow.get(settings.START_WORK, 'H:mm A').replace(tzinfo=settings.TIMEZONE)
+end_work = arrow.get(settings.END_WORK, 'H:mm A').replace(tzinfo=settings.TIMEZONE)
 
 
 # Parse arguments
@@ -132,7 +132,7 @@ def agenda():
 
 
 def available():
-    calidx = get_freebusy(BUSY + FREE)
+    calidx = get_freebusy(calendarIds=BUSY)
     my_busy = Interval(START, [], END)
     my_free = Interval(START, [Event(START, END)], END)
     for cal_id in BUSY:
@@ -142,7 +142,7 @@ def available():
     available = ~my_busy & my_free
     # print out availability:
     for ev in available.events:
-        print(ev.human_str(QUERY_TIMEZONE))
+        print(ev.human_str())
 
 
 if args.command == "list":
