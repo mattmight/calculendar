@@ -71,7 +71,7 @@ usage: gcal.py [--start START] [--end END]
                <command> 
 ```
 
-The `command` can be `list` or `agenda` or `available`.
+The `command` can be `list_cals` or `agenda` or `available`.
 
 
 ## Examples
