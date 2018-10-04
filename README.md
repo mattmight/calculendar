@@ -75,7 +75,7 @@ The `command` can be `list_cals` or `agenda` or `available` or `import`.
 
 ## Examples
 
-###Availability
+### Availability
 ```bash
 echo "Availability at office: "
 python gcal.py available \
@@ -108,7 +108,7 @@ May 15 @ 11:00am-02:00pm
 
 ```
 
-###Agenda
+### Agenda
 Get easy agendas:
 ```bash
 echo "Green Bay Packers Agenda: "
@@ -127,7 +127,7 @@ Green Bay Packers Agenda:
 2018-11-15 8:20 PM Packers @ Seahawks
 ```
 
-###List
+### List
 The default is to only list Calendars imported into your `settings.ini` file
 
 List Out Calendars
@@ -160,7 +160,7 @@ This would list all calendars, imported of otherwise, and then prompt you to sav
  Would you like to import these into your settings for future use?
  ```
  
- ###Importing .ICS Calendars
+ ### Importing .ICS Calendars
 You can now import .ics files like so:
 
 ```bash
