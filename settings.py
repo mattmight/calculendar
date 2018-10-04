@@ -182,6 +182,7 @@ def set_calendar(cal_name, cal_id):
 def list_imported_calendars():
     for cal, id in parser.items("Calendars"):
         print(cal, ":", id)
+    return parser.items("Calendars")
 
 
 def get_imported_calendar_by_name(name: str):

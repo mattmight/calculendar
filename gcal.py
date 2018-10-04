@@ -47,6 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "-i", "--input", default=[], nargs="+", help="paths to .ics calendars to import"
 )
+parser.add_argument("-a", "--all", action="store_true")
 args = parser.parse_args()
 QUERY_TIMEZONE = args.query_timezone
 START = arrow.get(args.start)
@@ -128,13 +129,16 @@ def get_cal(cal_index, cal_id):
 
 
 def list_cals():
-    if settings.calendars_imported:
+    if settings.calendars_imported and not args.all:
         settings.list_imported_calendars()
     else:
+        imported = settings.list_imported_calendars()
+        imported_names = [cal[0] for cal in imported]
         cals_result = gcal_service.calendarList().list().execute()
         cals = cals_result.get("items", [])
         for cal in cals:
-            print(cal["summary"] + ": " + cal["id"])
+            if cal["summary"].lower() not in imported_names:
+                print(cal["summary"] + ": " + cal["id"])
         user_response = input(
             "Would you like to import these into your settings for future use? "
         )
