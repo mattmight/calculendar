@@ -3,27 +3,28 @@ A tool for interacting with the Google calendar.
 """
 # Python Version Compatibility
 from __future__ import print_function
+
 # For command-line arguments
 import argparse
-# Module functions
-from pprint import pprint
 
-import settings
+# Module functions
 import src.credentials
 from src.utils import *
+from src.utils import safe_input as input
 from src.ics import get_ics_calendar_events
+
+
 # Dates to access the next month.
 NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
 IN30 = NOW.replace(days=+30)  # in 30 days
 
-start_work = arrow.get(settings.START_WORK, 'H:mm A').replace(tzinfo=settings.TIMEZONE)
-end_work = arrow.get(settings.END_WORK, 'H:mm A').replace(tzinfo=settings.TIMEZONE)
-
+start_work = arrow.get(settings.START_WORK, "H:mm A").replace(tzinfo=settings.TIMEZONE)
+end_work = arrow.get(settings.END_WORK, "H:mm A").replace(tzinfo=settings.TIMEZONE)
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("command", help="list | agenda | available")
+parser.add_argument("command", help="list | agenda | available | import")
 parser.add_argument("--start", default=NOW, help="start of timespan")
 parser.add_argument("--end", default=IN30, help="end of timespan")
 parser.add_argument(
@@ -43,23 +44,27 @@ parser.add_argument(
     nargs="+",
     help="calendar ids to use for free information",
 )
+parser.add_argument(
+    "-i", "--input", default=[], nargs="+", help="paths to .ics calendars to import"
+)
 args = parser.parse_args()
 QUERY_TIMEZONE = args.query_timezone
 START = arrow.get(args.start)
 END = arrow.get(args.end)
-BUSY = args.busy_calendars
-FREE = args.free_calendars
+BUSY = get_calendars_from_imported(args.busy_calendars)
+FREE = get_calendars_from_imported(args.free_calendars)
+INPUT = args.input
 
-service = src.credentials.get_service()
+gcal_service = src.credentials.get_service()
 
 
 # Get the next several events:
 def get_calendar_events(calendarId="primary", maxResults=10):
-    if '.ics' in calendarId:
+    if ".ics" in calendarId:
         return get_ics_calendar_events(calendarId)
     else:
         events_result = (
-            service.events()
+            gcal_service.events()
             .list(
                 calendarId=calendarId,
                 timeMin=START.isoformat(),
@@ -82,7 +87,7 @@ def get_freebusy(
         "timeZone": timeZone,
         "items": [{"id": id} for id in calendarIds],
     }
-    freebusy_result = service.freebusy().query(body=fb_q).execute()
+    freebusy_result = gcal_service.freebusy().query(body=fb_q).execute()
     cals = freebusy_result["calendars"]
     cal_index = {}
     for id, times in cals.items():
@@ -110,20 +115,32 @@ def get_cal(cal_index, cal_id):
     if cal_id == "weekday":
         return ~cal_weekends(START, END)
     if cal_id == "workhours":
-        return cal_daily_event(START, END, start_work.hour, start_work.minute, end_work.hour, end_work.minute)
+        return cal_daily_event(
+            START,
+            END,
+            start_work.hour,
+            start_work.minute,
+            end_work.hour,
+            end_work.minute,
+        )
     else:
         return cal_index[cal_id]
 
 
 def list_cals():
-    cals_result = service.calendarList().list().execute()
-    cals = cals_result.get("items", [])
-    for cal in cals:
-        print(cal["summary"] + ": " + cal["id"])
-    user_response = input("Would you like to save these into your settings for future use?")
-    if 'y' in user_response.lower():
+    if settings.calendars_imported:
+        settings.list_imported_calendars()
+    else:
+        cals_result = gcal_service.calendarList().list().execute()
+        cals = cals_result.get("items", [])
         for cal in cals:
-            settings.set_calendar(cal['summary'], cal['id'])
+            print(cal["summary"] + ": " + cal["id"])
+        user_response = input(
+            "Would you like to import these into your settings for future use? "
+        )
+        if "y" in user_response.lower():
+            for cal in cals:
+                settings.set_calendar(cal["summary"], cal["id"])
 
 
 def agenda():
@@ -154,11 +171,24 @@ def available():
         print(ev.human_str())
 
 
-if args.command == "list":
+def import_cal():
+    if not INPUT:
+        print("Import command requires -i or --input !")
+    else:
+        for path in INPUT:
+            name = input("What would you like to name this calendar? ")
+            settings.set_calendar(name, path)
     list_cals()
-elif args.command == "agenda":
-    agenda()
-elif args.command == "available":
-    available()
-else:
-    print("unknown command: " + args.command)
+
+
+if __name__ == "__main__":
+    if args.command.lower() == "list":
+        list_cals()
+    elif args.command.lower() == "agenda":
+        agenda()
+    elif args.command.lower() == "available":
+        available()
+    elif args.command.lower() == "import":
+        import_cal()
+    else:
+        print("unknown command: " + args.command)

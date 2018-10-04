@@ -1,3 +1,5 @@
+import sys
+
 import arrow
 
 
@@ -38,7 +40,11 @@ class Event:
         right_date = right.format("YYYY-MM-DD")
         if left_date == right_date:
             return (
-                left.format("MMMM DD @ h:mma") + "-" + right.format("h:mma") + " " + settings.TIMEZONE
+                left.format("MMMM DD @ h:mma")
+                + "-"
+                + right.format("h:mma")
+                + " "
+                + settings.TIMEZONE
             )
         else:
             return (
@@ -46,58 +52,6 @@ class Event:
                 + "-"
                 + right.format("MMMM DD @ h:mma" + " " + settings.TIMEZONE)
             )
-
-
-# Compute the complement of a sequence events between start and end.
-#
-# For example, if:
-#   the start is 4pm
-#   the end is 10pm
-#   events is [(5pm,7pm)]
-#  then the complement is:
-#   [(4pm,5pm), (7pm,10pm)]
-#
-# This converts between "busy" and "available."
-def events_complement(start, events, end):
-    if not events:
-        if start >= end:
-            return []
-        else:
-            return [Event(start, end)]
-    elif events[0].start <= start:
-        return events_complement(events[0].end, events[1:], end)
-    else:
-        head = events[0]
-        tail = events[1:]
-        return [Event(start, head.start)] + events_complement(head.end, tail, end)
-
-
-# Merge in order two ordered sequence of events.
-def events_union(first_event, second_event):
-    if not first_event:
-        return second_event
-    elif not second_event:
-        return first_event
-    elif first_event[0] < second_event[0]:
-        return [first_event[0]] + events_union(first_event[1:], second_event)
-    elif second_event[0] < first_event[0]:
-        return [second_event[0]] + events_union(first_event, second_event[1:])
-    else:
-        joined_event = first_event[0].join(second_event[0])
-        return events_union([joined_event] + first_event[1:], second_event[1:])
-
-
-# Combines all overlapping events in an ordered sequence of events:
-def events_flatten(events):
-    if len(events) <= 1:
-        return events
-    else:
-        a = events[0]
-        b = events[1]
-        if a.intersects(b):
-            return events_flatten([a.join(b)] + events[2:])
-        else:
-            return [a] + events_flatten(events[1:])
 
 
 # A cal_interval represents an interval of time on a calendar
@@ -128,8 +82,66 @@ class Interval:
         return "\n".join([str(x) for x in self.events])
 
 
-# A cal_interval with a single event every day:
+# Compute the complement of a sequence events between start and end.
+#
+# For example, if:
+#   the start is 4pm
+#   the end is 10pm
+#   events is [(5pm,7pm)]
+#  then the complement is:
+#   [(4pm,5pm), (7pm,10pm)]
+#
+# This converts between "busy" and "available"
+def events_complement(start, events, end):
+    if not events:
+        if start >= end:
+            return []
+        else:
+            return [Event(start, end)]
+    elif events[0].start <= start:
+        return events_complement(events[0].end, events[1:], end)
+    else:
+        head = events[0]
+        tail = events[1:]
+        return [Event(start, head.start)] + events_complement(head.end, tail, end)
+
+
+def events_union(first_event, second_event):
+    """
+    Merge in order two ordered sequence of events.
+    """
+    if not first_event:
+        return second_event
+    elif not second_event:
+        return first_event
+    elif first_event[0] < second_event[0]:
+        return [first_event[0]] + events_union(first_event[1:], second_event)
+    elif second_event[0] < first_event[0]:
+        return [second_event[0]] + events_union(first_event, second_event[1:])
+    else:
+        joined_event = first_event[0].join(second_event[0])
+        return events_union([joined_event] + first_event[1:], second_event[1:])
+
+
+def events_flatten(events):
+    """
+    Combines all overlapping events in an ordered sequence of events
+    """
+    if len(events) <= 1:
+        return events
+    else:
+        a = events[0]
+        b = events[1]
+        if a.intersects(b):
+            return events_flatten([a.join(b)] + events[2:])
+        else:
+            return [a] + events_flatten(events[1:])
+
+
 def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
+    """
+    A cal_interval with a single event every day:
+    """
     new_start = start.floor("day")
     new_end = end.replace(days=+1).floor("day")
 
@@ -139,7 +151,9 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
             return []
         else:
             ev = Event(
-                start.replace(hour=start_hour, minute=start_min, tzinfo=settings.TIMEZONE),
+                start.replace(
+                    hour=start_hour, minute=start_min, tzinfo=settings.TIMEZONE
+                ),
                 start.replace(hour=end_hour, minute=end_min, tzinfo=settings.TIMEZONE),
             )
             evs = events_daily_event(
@@ -156,8 +170,10 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
     )
 
 
-# A cal_interval where the weekends are a single event:
 def cal_weekends(start, end):
+    """
+    A cal_interval where the weekends are a single event
+    """
     new_start = start.floor("day")
     new_end = end.replace(days=+1).floor("day")
 
@@ -173,3 +189,30 @@ def cal_weekends(start, end):
             return events_weekends(start.replace(days=+1), end)
 
     return Interval(start, events_flatten(events_weekends(new_start, new_end)), end)
+
+
+def get_calendars_from_imported(calendars: list) -> list:
+    """
+    Takes mixed list of calendars from command line and converts names to ids for later parsing
+    """
+    ret = []
+    for cal in calendars:
+        if ".ics" in cal or ".com" in cal:
+            ret.append(cal)
+        elif "primary" in cal.lower():
+            pass
+        else:
+            cal_id = settings.get_imported_calendar_by_name(cal)
+            ret.append(cal_id)
+    return ret
+
+
+def safe_input(message):
+    """
+    Input is unsafe in python 2
+    https://bandit.readthedocs.io/en/latest/blacklists/blacklist_calls.html#b322-input
+    """
+    if sys.version_info[0] < 3:
+        return raw_input(message)
+    else:
+        return input(message)

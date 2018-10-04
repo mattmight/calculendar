@@ -15,33 +15,17 @@ import os
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-
 import settings
 
-def get_credentials_directory(location=settings.CREDENTIALS_DIR):
-    if not location:
-        try:
-            credentials = os.getenv("HOME") + "/etc/keys/google-api/"
-            return credentials
-        except TypeError:
-            print("Your credentials.json does not seem to be in the expected location")
-    elif os.path.exists(os.path.join(location + "credentials.json")):
-        credentials = location
-        return credentials
-    elif "credentials.json" in location:
-        credentials = os.path.dirname(location)
-        return credentials
-    loc = input("Path to credentials.json: ")
-    return get_credentials_directory(location=loc)
 
-
-# Setup access to the Calendar API:
-# This may require an interactive web authentication the fist time.
-
-# Credentials should be stored in API_KEYS_DIR.
+# Credentials should be stored in settings.CREDENTIALS_DIR
 def get_service():
+    """
+    This is straight out of the tutorial at:
+    https://developers.google.com/calendar/quickstart/python
+    """
     SCOPES = "https://www.googleapis.com/auth/calendar"
-    cred = os.path.join(get_credentials_directory(), "credentials.json")
+    cred = os.path.join(settings.CREDENTIALS_DIR, "credentials.json")
     store = file.Storage("token.json")
     creds = store.get()
     if not creds or creds.invalid:
