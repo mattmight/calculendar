@@ -31,6 +31,10 @@ parser.add_argument(
     "--query-timezone", default=settings.TIMEZONE, help="timezone to use for output"
 )
 parser.add_argument(
+    "--output-timezone", default=settings.TIMEZONE, help="timezone to use for output"
+)
+
+parser.add_argument(
     "--busy-calendars",
     metavar="calendar-id",
     default=["primary"],
@@ -49,7 +53,7 @@ parser.add_argument(
 )
 parser.add_argument("-a", "--all", action="store_true")
 args = parser.parse_args()
-QUERY_TIMEZONE = args.query_timezone
+QUERY_TIMEZONE = args.query_timezone or args.output_timezone
 START = arrow.get(args.start)
 END = arrow.get(args.end)
 BUSY = get_calendars_from_imported(args.busy_calendars)

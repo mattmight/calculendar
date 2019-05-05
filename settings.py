@@ -189,4 +189,4 @@ def get_imported_calendar_by_name(name: str):
     for cal, id in parser.items("Calendars"):
         if name.lower() == cal.lower() and name.lower() != "primary":
             return id
-    return print("Calendar with name " + name + " not found")
+    return name # print("Calendar with name " + name + " not found")

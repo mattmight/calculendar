@@ -54,7 +54,12 @@ You will need to create a `credentials.json` to access the Google Calendar API.
 You can copy the steps in the [Python Google Calendar API quickstart tutorial](https://developers.google.com/calendar/quickstart/python) to obtain this.
 
 When you save the credentials, ensure you remember the location, as it will be required. 
+You may need to install the following packages (with pip) as well:
 
+ + `oauth2client`
+ + `arrow`
+ + `pytz`
+ + `icalendar`
 
 
 ## Usage
