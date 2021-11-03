@@ -17,10 +17,12 @@ from src.ics import get_ics_calendar_events
 # Dates to access the next month.
 NOW_DATE = arrow.utcnow().date()
 NOW = arrow.utcnow()  # right now
-IN30 = NOW.replace(days=+30)  # in 30 days
+IN30 = NOW.shift(days=+30)  # in 30 days
 
-start_work = arrow.get(settings.START_WORK, "H:mm A").replace(tzinfo=settings.TIMEZONE)
-end_work = arrow.get(settings.END_WORK, "H:mm A").replace(tzinfo=settings.TIMEZONE)
+
+start_work = arrow.get(settings.START_WORK, "H:mm A", tzinfo=settings.TIMEZONE)
+end_work = arrow.get(settings.END_WORK, "H:mm A", tzinfo=settings.TIMEZONE)
+
 
 # Parse arguments
 parser = argparse.ArgumentParser()
