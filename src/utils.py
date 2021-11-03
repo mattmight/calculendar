@@ -143,7 +143,7 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
     A cal_interval with a single event every day:
     """
     new_start = start.floor("day")
-    new_end = end.replace(days=+1).floor("day")
+    new_end = end.shift(days=+1).floor("day")
 
     def events_daily_event(start, end, start_hour, start_min, end_hour, end_min):
         # reset start date to start of day; end date to end of day
@@ -151,13 +151,11 @@ def cal_daily_event(start, end, start_hour, start_min, end_hour, end_min):
             return []
         else:
             ev = Event(
-                start.replace(
-                    hour=start_hour, minute=start_min, tzinfo=settings.TIMEZONE
-                ),
-                start.replace(hour=end_hour, minute=end_min, tzinfo=settings.TIMEZONE),
+                start.shift(hours=start_hour, minutes=start_min).replace(tzinfo=settings.TIMEZONE),
+                start.shift(hours=end_hour, minutes=end_min).replace(tzinfo=settings.TIMEZONE),
             )
             evs = events_daily_event(
-                start.replace(days=+1), end, start_hour, start_min, end_hour, end_min
+                start.shift(days=+1), end, start_hour, start_min, end_hour, end_min
             )
             return [ev] + evs
 
@@ -175,7 +173,7 @@ def cal_weekends(start, end):
     A cal_interval where the weekends are a single event
     """
     new_start = start.floor("day")
-    new_end = end.replace(days=+1).floor("day")
+    new_end = end.shift(days=+1).floor("day")
 
     def events_weekends(start, end):
         # TODO: abstract this to handle different conventions for weekends
@@ -183,10 +181,10 @@ def cal_weekends(start, end):
             return []
         elif start.weekday() in settings.weekend_num:
             return [
-                Event(start, start.replace(days=+1).floor("day"))
-            ] + events_weekends(start.replace(days=+1), end)
+                Event(start, start.shift(days=+1).floor("day"))
+            ] + events_weekends(start.shift(days=+1), end)
         else:
-            return events_weekends(start.replace(days=+1), end)
+            return events_weekends(start.shift(days=+1), end)
 
     return Interval(start, events_flatten(events_weekends(new_start, new_end)), end)
 
